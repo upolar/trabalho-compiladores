@@ -8,7 +8,6 @@ enum Names
 {
     UNDEF,
     ID,
-    INTEGER_LITERAL,
     LT,
     GT,
     LE,
@@ -21,15 +20,16 @@ enum Names
     ASSIGN,
     EQ,
     NEQ,
-    RPAREN,
-    LPAREN,
-    RBRACE,
-    LBRACE,
-    RBRACKET,
-    LBRACKET,
-    SEMICOLON,
-    COMMA,
-    DOT,
+    LPAREN, // (
+    RPAREN, // )
+    LBRACE, // {
+    RBRACE, // }
+    LBRACKET, // [
+    RBRACKET, // ]
+    SEMICOLON, 
+    COMMA, 
+    DOT, 
+    INTEGER_LITERAL,
     STRING_LITERAL,
     END_OF_FILE,
     CLASS, EXTENDS, INT, STRING, BREAK, PRINT, READ, RETURN, SUPER, IF, ELSE, FOR, NEW, CONSTRUCTOR
