@@ -1,5 +1,8 @@
 #include <fstream>
+#include <vector>
 #include "symboltable.h"
+
+using namespace std;
 
 class Scanner 
 {
@@ -8,7 +11,10 @@ class Scanner
         int pos;//Posição atual
         int line;
         SymbolTable* st;
+        vector<Token*> lookaheadBuffer;
     public:
+        Token* lookAhead(int n);
+        Token* consumeToken();
     //Construtor
         Scanner(string, SymbolTable*);
 

@@ -37,6 +37,25 @@ Scanner::getLine()
     return line;
 }
 
+Token* Scanner::lookAhead(int n) {
+    while (lookaheadBuffer.size() < n) {
+        Token* t = nextToken();  
+        lookaheadBuffer.push_back(t);
+    }
+
+    return lookaheadBuffer[n-1]; 
+}
+
+Token* Scanner::consumeToken() {
+    if (!lookaheadBuffer.empty()) {
+        Token* t = lookaheadBuffer.front();
+        lookaheadBuffer.erase(lookaheadBuffer.begin());
+        return t;
+    } else {
+        return nextToken();
+    }
+}
+
 //Método que retorna o próximo token da entrada
 Token* 
 Scanner::nextToken()

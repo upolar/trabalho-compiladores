@@ -19,6 +19,8 @@ class Parser
         bool isStat();
         bool isRelOp();
         bool isExpression();
+        bool isVarDecl(); 
+        bool isMethodDecl();
 
 		void initSimbolTable();
 
@@ -71,7 +73,7 @@ class Parser
         void argList();
         void argListLinha();
 
-        string getExpectedTokenName(int);
+        string tokenName(int);
         void error(string);
         void program();
 

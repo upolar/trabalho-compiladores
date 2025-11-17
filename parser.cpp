@@ -11,7 +11,100 @@ Parser::Parser(string input)
 void
 Parser::advance()
 {
-	lToken = scanner->nextToken();
+	lToken = scanner->consumeToken();
+}
+
+string
+Parser::tokenName(int t)
+{
+	switch (t) {
+		case UNDEF: 
+			return "UNDEF";
+
+		case ID: 
+			return "ID";
+		
+		case INTEGER_LITERAL: 
+			return "INTEGER_LITERAL";
+		case STRING_LITERAL: 
+			return "STRING_LITERAL";
+		case CLASS: 
+			return "class";
+		case EXTENDS: 
+			return "extends";
+		case INT: 
+			return "int";
+		case STRING: 
+			return "string";
+		case BREAK: 
+			return "break";
+		case PRINT: 
+			return "print";
+		case READ: 
+			return "read";
+		case RETURN: 
+			return "return";
+		case SUPER: 
+			return "super";
+		case IF: 
+			return "if";
+		case ELSE: 
+			return "else";
+		case FOR: 
+			return "for";
+		case NEW: 
+			return "new";
+		case CONSTRUCTOR: 
+			return "constructor";
+
+		case LT: 
+			return "<";
+		case GT: 
+			return ">";
+		case LE: 
+			return "<=";
+		case GE: 
+			return ">=";
+		case PLUS: 
+			return "+";	
+		case MINUS: 
+			return "-";
+		case MULT: 
+			return "*";
+		case DIV: 
+			return "/";
+		case MOD: 
+			return "%";
+		case ASSIGN: 
+			return "=";
+		case EQ: 
+			return "==";
+		case NEQ: 
+			return "!=";
+		case LPAREN: 
+			return "(";
+		case RPAREN: 
+			return ")";
+		case LBRACE: 
+			return "{";
+		case RBRACE: 
+			return "}";
+		case LBRACKET: 
+			return "[";
+		case RBRACKET: 
+			return "]";
+		case SEMICOLON: 
+			return ";";
+		case COMMA: 
+			return ",";
+		case DOT: 
+			return ".";
+		case END_OF_FILE: 
+			return "END_OF_FILE";
+		
+		default: 
+			return "";
+	}
 }
 
 void
@@ -21,7 +114,11 @@ Parser::match(int t)
 		advance();
 	else
 	{
-		error("Erro inesperado");
+		if (tokenName(t) != "") {
+			error("Erro inesperado: esperava receber o token " + tokenName(t) + " e recebi o token " + tokenName(lToken->name));
+		} else {
+			error("Erro inesperado");
+		}
 	}
 		
 }
@@ -71,7 +168,6 @@ Parser::initSimbolTable()
 	globalST->add(new STEntry(t, true));
 }
  
-// Funções auxiliares
 bool
 Parser::isType()
 {
@@ -95,37 +191,30 @@ Parser::brackets()
 bool
 Parser::isExpression()
 {
-	int allowedExpression[] = {
-		PLUS,
-		MINUS
-	};
-
-	for (unsigned int i = 0; i < sizeof(allowedExpression)/sizeof(int); i++)
-		if (lToken->name == allowedExpression[i])
-			return true;
-	return false;
+	return (lToken->name == INTEGER_LITERAL ||
+		lToken->name == STRING_LITERAL ||
+		lToken->name == ID ||
+		lToken->name == LPAREN ||
+		lToken->name == PLUS ||
+		lToken->name == MINUS 
+	);
 }
 
 bool
 Parser::isStat()
 {
-	int stats[] = {
-		PRINT, // Produção 24
-		READ, // Produção 25
-		RETURN, // Produção 26
-		SUPER, // Produção 27
-		IF, // Produção 28
-		FOR,  // Produção 29
-		ID, // Produção 23 e 32
-		SEMICOLON
-	};
-
-	for (long unsigned int i = 0; i < sizeof(stats)/sizeof(int); i++) 
-	{
-		if (lToken->name == stats[i])
-			return true;
-	}
-	return false;
+	return (
+		isType() ||
+		lToken->name == ASSIGN ||
+		lToken->name == PRINT ||
+		lToken->name == READ ||
+		lToken->name == RETURN ||
+		lToken->name == SUPER ||
+		lToken->name == IF ||
+		lToken->name == FOR ||
+		lToken->name == BREAK ||
+		lToken->name == SEMICOLON 
+	);
 	
 }
 
@@ -133,12 +222,12 @@ bool
 Parser::isRelOp()
 {
 	int allowedRelOps[] = {
-		LT, // <
-    	GT, // >
-    	LE, // <=
-    	GE, // >=
-		EQ, // ==
-		NEQ // !=
+		LT,
+    	GT,
+    	LE, 
+		GE, 
+		EQ, 
+		NEQ 
 	};
 
 	for (long unsigned int i = 0; i < sizeof(allowedRelOps)/sizeof(int); i++)
@@ -147,7 +236,89 @@ Parser::isRelOp()
 	return false;
 }
 
-// Funções principais	
+bool
+Parser::isVarDecl()
+{
+	if (!isType()) {
+		return false;
+	}
+	
+	int lookaheadPos = 1; 
+	Token* lookaheadToken;
+	
+	lookaheadToken = scanner->lookAhead(lookaheadPos);
+	if (lookaheadToken && lookaheadToken->name == LBRACKET) {
+		lookaheadPos++; 
+		lookaheadToken = scanner->lookAhead(lookaheadPos);
+		if (lookaheadToken && lookaheadToken->name == RBRACKET) {
+			lookaheadPos++;
+		} else {
+			return false;
+		}
+	}
+	
+	lookaheadToken = scanner->lookAhead(lookaheadPos);
+	if (!lookaheadToken || lookaheadToken->name != ID) {
+		return false;
+	}
+	lookaheadPos++;
+	
+	lookaheadToken = scanner->lookAhead(lookaheadPos);
+	if (!lookaheadToken) {
+		return false;
+	}
+	
+	if (lookaheadToken->name == LPAREN) {
+		return false;
+	}
+	
+	if (lookaheadToken->name == COMMA || lookaheadToken->name == SEMICOLON) {
+		return true;
+	}
+	
+	return false;
+}
+
+bool
+Parser::isMethodDecl()
+{
+
+	if (!isType()) {
+		return false;
+	}
+	
+	int lookaheadPos = 1;
+	Token* lookaheadToken;
+
+	lookaheadToken = scanner->lookAhead(lookaheadPos);
+	if (lookaheadToken && lookaheadToken->name == LBRACKET) {
+		lookaheadPos++;
+		lookaheadToken = scanner->lookAhead(lookaheadPos);
+		if (lookaheadToken && lookaheadToken->name == RBRACKET) {
+			lookaheadPos++;
+		} else {
+			return false; 
+		}
+	}
+
+	lookaheadToken = scanner->lookAhead(lookaheadPos);
+	if (!lookaheadToken || lookaheadToken->name != ID) {
+		return false;
+	}
+	lookaheadPos++;
+
+	lookaheadToken = scanner->lookAhead(lookaheadPos);
+	if (!lookaheadToken) {
+		return false;
+	}
+
+	if (lookaheadToken->name == LPAREN) {
+		return true;
+	}
+	
+	return false;
+}
+
 void
 Parser::program()
 {
@@ -191,10 +362,10 @@ Parser::classBody()
 void
 Parser::varDeclListOpt()
 {
-	if (isType()) {
+
+	if (isVarDecl()) {
 		varDeclList();
 	}
-
 }
 
 void
@@ -207,7 +378,8 @@ Parser::varDeclList()
 void
 Parser::varDeclListLinha()
 {
-	if(isType())
+
+	if(isVarDecl())
 	{
 		varDecl();
 		varDeclListLinha();
@@ -221,7 +393,10 @@ Parser::varDecl()
 	brackets();
 	match(ID);
 	varDeclOpt();
-	match(SEMICOLON);
+	if (lToken->name == SEMICOLON) {
+		match(SEMICOLON);
+	}
+		
 }
 
 void
@@ -286,8 +461,14 @@ Parser::methodBody()
 void
 Parser::methodDeclListOpt()
 {
-	if (isType()) {
+
+	if (isMethodDecl()) 
+	{
 		methodDeclList();
+	}
+	else if (lToken->name == LPAREN)
+	{
+		methodBody();
 	}
 }
 
@@ -301,7 +482,7 @@ Parser::methodDeclList()
 void
 Parser::methodDeclListLinha()
 {
-	if (isType()) {
+	if (isMethodDecl()) {
 		methodDecl();
 		methodDeclListLinha();
 	}
@@ -335,6 +516,7 @@ Parser::paramListLinha()
 {
 	if (lToken->name == COMMA)
 	{
+		match(COMMA);
 		param();
 		paramListLinha();
 	}
@@ -374,24 +556,33 @@ Parser::statementsLinha()
 void
 Parser::statement() 
 {
-	if (isType()) 
-		varDeclList();
-	else if (lToken->name == ID) 
+
+	if (lToken->name == ID) 
+	{
 		atribStat();
+		match(SEMICOLON);
+	}
+	else if (isType()) 
+	{
+		varDeclList();
+	}
 	else if (lToken->name == PRINT)
 	{
 		match(PRINT);
 		expression();
+		match(SEMICOLON);
 	}
 	else if (lToken->name == READ)
 	{
 		match(READ);
 		lValue();
+		match(SEMICOLON);
 	}
 	else if (lToken->name == RETURN)
 	{
 		match(RETURN);
 		expression();
+		match(SEMICOLON);
 	}
 	else if (lToken->name == SUPER)
 	{
@@ -399,6 +590,7 @@ Parser::statement()
 		match(LPAREN);
 		argListOpt();
 		match(RPAREN);
+		match(SEMICOLON);
 	}
 	else if (lToken->name == IF)
 		ifStat();
@@ -420,8 +612,17 @@ Parser::atribStat()
 {
 	lValue();
 	match(ASSIGN);
-	if (lToken->name == NEW || isType()) {
+	if (lToken->name == NEW) {
 		allocExpression();
+	} else if (lToken->name == INT || lToken->name == STRING) {
+		allocExpression();
+	} else if (lToken->name == ID) {
+		Token* lookaheadToken = scanner->lookAhead(1);
+		if (lookaheadToken && lookaheadToken->name == LBRACKET) {
+			allocExpression();
+		} else {
+			expression();
+		}
 	} else {
 		expression();
 	}
@@ -493,11 +694,13 @@ Parser::lValueComp()
 		match(ID);
 		if (lToken->name == LBRACKET)
 		{
+			match(LBRACKET);
 			expression();
 			match(RBRACKET);
 		}
 		else if (lToken->name == LPAREN)
 		{
+			match(LPAREN);
 			argListOpt();
 			match(RPAREN);
 		}
@@ -569,13 +772,8 @@ Parser::term()
 void
 Parser::unaryExpression()
 {
-	if (lToken->name == PLUS) 
-	{
-		match(PLUS);
-	} 
-	else {
-		match(MINUS);
-	}
+	if (lToken->name == PLUS || lToken->name == MINUS) 
+		match(lToken->name);
 	factor();
 }
 
@@ -591,6 +789,10 @@ Parser::factor()
 		match(LPAREN);
 		expression();
 		match(RPAREN);
+	}
+	else
+	{
+		error("Esperava um factor (INTEGER_LITERAL, STRING_LITERAL, ID ou LPAREN), mas recebi " + tokenName(lToken->name));
 	}
 }
 
