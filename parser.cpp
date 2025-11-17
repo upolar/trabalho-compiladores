@@ -393,10 +393,7 @@ Parser::varDecl()
 	brackets();
 	match(ID);
 	varDeclOpt();
-	if (lToken->name == SEMICOLON) {
-		match(SEMICOLON);
-	}
-		
+	match(SEMICOLON);
 }
 
 void
