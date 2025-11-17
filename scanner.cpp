@@ -37,7 +37,7 @@ Scanner::getLine()
     return line;
 }
 
-Token* Scanner::lookAhead(int n) {
+Token* Scanner::lookAhead(size_t n) {
     while (lookaheadBuffer.size() < n) {
         Token* t = nextToken();  
         lookaheadBuffer.push_back(t);

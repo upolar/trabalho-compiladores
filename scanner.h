@@ -13,7 +13,7 @@ class Scanner
         SymbolTable* st;
         vector<Token*> lookaheadBuffer;
     public:
-        Token* lookAhead(int n);
+        Token* lookAhead(size_t n);
         Token* consumeToken();
     //Construtor
         Scanner(string, SymbolTable*);
